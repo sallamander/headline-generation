@@ -85,8 +85,8 @@ if __name__ == '__main__':
             cleaned_bodies.append(body)
             cleaned_headlines.append(headline)
     
-    body_fp = '../../data/articles/twenty_newsgroups/bodies.pkl'
-    headline_fp = '../../data/articles/twenty_newsgroups/headlines.pkl'
+    body_fp = 'data/articles/twenty_newsgroups/bodies.pkl'
+    headline_fp = 'data/articles/twenty_newsgroups/headlines.pkl'
 
     with open(body_fp, 'wb+') as f: 
         pickle.dump(cleaned_bodies, f)
