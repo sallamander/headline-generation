@@ -112,8 +112,8 @@ def vectorize_texts(texts, idx_dct):
 
 if __name__ == '__main__': 
     
-    embedding_fp = 'data/word_embeddings/google_news_300dim.bin'
-    wrd_embedding = Word2Vec.load_word2vec_format(embedding_fp, binary=True)
+    embedding_fp = 'data/word_embeddings/glove.6B.50d.txt'
+    wrd_embedding = Word2Vec.load_word2vec_format(embedding_fp, binary=False)
     
     body_fp = 'data/articles/twenty_newsgroups/bodies.pkl'
     headline_fp = 'data/articles/twenty_newsgroups/headlines.pkl'
@@ -132,13 +132,4 @@ if __name__ == '__main__':
     non_empty_idx = np.where(headlines_arr != -99)[0]
     bodies_arr = bodies_arr[non_empty_idx]
     headlines_arr = headlines_arr[non_empty_idx]
-
-    body_fp = 'work/articles/twenty_newsgroups/bodies.pkl'
-    headline_fp = 'work/articles/twenty_newsgroups/headlines.pkl'
-
-    with open(body_fp, 'wb+') as f: 
-        pickle.dump(bodies_arr, f)
-    with open(headline_fp, 'wb+') as f: 
-        pickle.dump(headlines_arr, f)
-
 
