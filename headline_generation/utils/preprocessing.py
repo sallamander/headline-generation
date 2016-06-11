@@ -26,10 +26,37 @@ def create_mapping_dicts(wrd_embedding):
     gensim_dct = Dictionary()
     gensim_dct.doc2bow(wrd_embedding.vocab.keys(), allow_update=True)
 
-    idx_dct = {wrd: idx + 1 for idx, wrd in gensim_dct.items()}
+    idx_dct = {wrd: idx for idx, wrd in gensim_dct.items()}
     vector_dct = {wrd: wrd_embedding[wrd] for idx, wrd in gensim_dct.items()}
 
     return idx_dct, vector_dct 
+
+def gen_embedding_weights(idx_dct, vector_dct): 
+    """Generate the initial embedding weights to feed into Keras model.
+
+    Args: 
+    ----
+        idx_dct: dict
+            Holds word:index pairs 
+        vector_dct: dict
+            Holds word:vector (weights) pairs. 
+
+    Return: 
+    ------
+        embedding_weights: 2d np.ndarry
+    """
+
+    n_words = len(idx_dct)
+    # A little gross, but avoids loading all keys/values into memory. We need 
+    # to access one of the lists and see how many dimensions each embedding has.
+    n_dim = next(len(vector_dct[word]) for word in vector_dct)
+
+    embedding_weights = np.zeros((n_words, n_dim))
+
+    for wrd, idx in idx_dct.items():
+        embedding_weights[idx, :] = vector_dct[wrd]
+
+    return embedding_weights
 
 def _vec_txt(words, idx_dct): 
     """Translate the inputted words into numbers using the index_dct. 
@@ -84,7 +111,7 @@ def vectorize_texts(texts, idx_dct):
     return vectorized_words_arr
 
 if __name__ == '__main__': 
-
+    
     embedding_fp = '../../data/word_embeddings/google_news_300dim.bin'
     wrd_embedding = Word2Vec.load_word2vec_format(embedding_fp, binary=True)
     
@@ -97,6 +124,8 @@ if __name__ == '__main__':
         headlines = pickle.load(f)
 
     idx_dct, vector_dct = create_mapping_dicts(wrd_embedding)
+    embedding_weights = gen_embedding_weights(idx_dct, vector_dct)
+
     bodies_arr = vectorize_texts(bodies, idx_dct)
     headlines_arr = vectorize_texts(headlines, idx_dct)
 
@@ -111,3 +140,5 @@ if __name__ == '__main__':
         pickle.dump(bodies_arr, f)
     with open(headline_fp, 'wb+') as f: 
         pickle.dump(headlines_arr, f)
+
+
