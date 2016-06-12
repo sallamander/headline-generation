@@ -1,44 +1,11 @@
-"""A module formatting article/headline pairs for a Keras model. 
+"""A module for formatting article/headline pairs for a Keras model. 
 
-This script contatins functions for reading in raw article/headline pairs as
-well as an embedding. It contains further functions for running the article/headline
-pairs through that embedding to vectorize them and prepare them to be run through 
-an LSTM Keras model. 
+This module contains functions for running article/headline pairs through an
+embedding to vectorize them and prepare them to be run through an LSTM Keras model. 
 """
 
 import numpy as np
-import pickle
-from gensim.models.word2vec import Word2Vec
 from gensim.corpora.dictionary import Dictionary
-
-def return_data(data_type): 
-    """Return the data specified by the inputted data_type.
-
-    This function is built to allow for easier calls for the data from scripts
-    external to this one. 
-
-    Args: 
-    ----
-        data_type: str
-
-    Return: varied
-    """
-
-    if data_type == "word_embedding": 
-        embedding_fp = 'data/word_embeddings/glove.6B.50d.txt'
-        wrd_embedding = Word2Vec.load_word2vec_format(embedding_fp, binary=False)
-        return wrd_embedding
-    elif data_type == "articles": 
-        body_fp = 'data/articles/twenty_newsgroups/bodies.pkl'
-        headline_fp = 'data/articles/twenty_newsgroups/headlines.pkl'
-
-        with open(body_fp, 'rb') as f: 
-            bodies = pickle.load(f)
-        with open(headline_fp, 'rb') as f: 
-            headlines = pickle.load(f)
-        return bodies, headlines
-    else: 
-        raise Exception('Invalid data type requested!')
 
 def create_mapping_dicts(wrd_embedding): 
     """Generate word:index and word:vector dictionaries. 

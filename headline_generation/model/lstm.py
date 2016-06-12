@@ -1,15 +1,12 @@
 """A script for fitting an LSTM to generate headlines for article text."""
 
-import numpy as np
-import pickle
 from keras.preprocessing import sequence
 from keras.layers import Input
 from keras.layers.embeddings import Embedding
-from keras.layers.recurrent import LSTM
-from keras.models import Sequential
-from gensim.models.word2vec import Word2Vec
+from keras.models import Model
 from headline_generation.utils.preprocessing import create_mapping_dicts, \
-        gen_embedding_weights, vectorize_texts, return_data, filter_empties
+        gen_embedding_weights, vectorize_texts, filter_empties
+from headline_generation.utils.data_io import return_data
 
 
 def make_model(embedding_weights, max_features=300, batch_size=32, input_length=50):
@@ -17,6 +14,7 @@ def make_model(embedding_weights, max_features=300, batch_size=32, input_length=
 
     Args: 
     ----
+        embedding_weights: 2d np.ndarray
         max_features (optional): int
             Holds the max number of features for the embedding layer
         batch_size (optional): int
@@ -29,13 +27,14 @@ def make_model(embedding_weights, max_features=300, batch_size=32, input_length=
         lstm_model: keras.model.Sequential compiled model
     """
 
-    input_dim = embedding_weights.shape[0]
-    output_dim = embedding_weights.shape[1]
+    dict_size = embedding_weights.shape[0] # Num words in corpus
+    embedding_dim = embedding_weights.shape[1] # Num dims in vec representation
 
-    lstm_model = Sequential()
-    lstm_model.add(Embedding(input_dim=input_dim, output_dim=output_dim, 
-                        input_length=input_length, weights=[embedding_weights]))
+    bodies = Input(shape=(input_length,), dtype='int32') 
+    embeddings = Embedding(input_dim=dict_size, output_dim=embedding_dim,
+                           weights=[embedding_weights])(bodies)
 
+    lstm_model = Model(input=bodies, output=embeddings)
     lstm_model.compile('rmsprop', 'mse')
 
     return lstm_model
@@ -59,5 +58,4 @@ if __name__ == '__main__':
 
     test_X = X_s[0:32]
     output_test = lstm_model.predict(test_X)
-
     
