@@ -3,6 +3,8 @@
 from keras.preprocessing import sequence
 from keras.layers import Input
 from keras.layers.embeddings import Embedding
+from keras.layers.recurrent import LSTM
+from keras.layers.core import Dense
 from keras.models import Model
 from headline_generation.utils.preprocessing import create_mapping_dicts, \
         gen_embedding_weights, vectorize_texts, filter_empties
@@ -33,8 +35,11 @@ def make_model(embedding_weights, max_features=300, batch_size=32, input_length=
     bodies = Input(shape=(input_length,), dtype='int32') 
     embeddings = Embedding(input_dim=dict_size, output_dim=embedding_dim,
                            weights=[embedding_weights])(bodies)
+    layer = LSTM(32, return_sequences=True)(embeddings)
+    layer = LSTM(32, return_sequences=False)(layer)
+    layer = Dense(dict_size)(layer)
 
-    lstm_model = Model(input=bodies, output=embeddings)
+    lstm_model = Model(input=bodies, output=layer)
     lstm_model.compile('rmsprop', 'mse')
 
     return lstm_model
@@ -54,8 +59,9 @@ if __name__ == '__main__':
 
     input_length=50
     X_s = sequence.pad_sequences(X_s, input_length)
+    '''
     lstm_model = make_model(embedding_weights, input_length=input_length)
 
     test_X = X_s[0:32]
     output_test = lstm_model.predict(test_X)
-    
+    ''' 
