@@ -7,7 +7,7 @@ from keras.layers.recurrent import LSTM
 from keras.layers.core import Dense
 from keras.models import Model
 from headline_generation.utils.preprocessing import create_mapping_dicts, \
-        gen_embedding_weights, vectorize_texts, filter_empties
+        gen_embedding_weights, vectorize_texts, filter_empties, format_inputs
 from headline_generation.utils.data_io import return_data
 
 
@@ -57,11 +57,11 @@ if __name__ == '__main__':
 
     bodies_arr = vectorize_texts(bodies, word_idx_dct)
     headlines_arr = vectorize_texts(headlines, word_idx_dct)
-    X_s, y_s = filter_empties(bodies_arr, headlines_arr)
+    bodies_arr, headlines_arr = filter_empties(bodies_arr, headlines_arr)
+    vocab_size = len(word_vector_dct)
+    maxlen = 50
+    X, y = format_inputs(bodies_arr, headlines_arr, vocab_size=vocab_size, 
+                         maxlen=maxlen)
 
-    input_length=50
-    X_s = sequence.pad_sequences(X_s, input_length)
-    lstm_model = make_model(embedding_weights, input_length=input_length)
-
-    test_X = X_s[0:32]
-    output_test = lstm_model.predict(test_X)
+    lstm_model = make_model(embedding_weights, input_length=maxlen)
+    lstm_model.fit(X, y, nb_epoch=1)
