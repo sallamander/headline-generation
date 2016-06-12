@@ -50,7 +50,9 @@ if __name__ == '__main__':
     wrd_embedding = return_data("word_embedding")
     bodies, headlines = return_data("articles")
 
-    word_idx_dct, idx_word_dct, word_vector_dct = create_mapping_dicts(wrd_embedding)
+    word_idx_dct, idx_word_dct, word_vector_dct = \
+            create_mapping_dicts(wrd_embedding, filter_corpus=True, bodies=bodies, 
+                                 headlines=headlines)
     embedding_weights = gen_embedding_weights(word_idx_dct, word_vector_dct)
 
     bodies_arr = vectorize_texts(bodies, word_idx_dct)
