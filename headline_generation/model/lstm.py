@@ -1,5 +1,7 @@
 """A script for fitting an LSTM to generate headlines for article text."""
 
+import datetime
+import numpy as np
 from keras.preprocessing import sequence
 from keras.layers import Input
 from keras.layers.embeddings import Embedding
@@ -37,13 +39,50 @@ def make_model(embedding_weights, max_features=300, batch_size=32, input_length=
                            weights=[embedding_weights])(bodies)
     layer = LSTM(32, return_sequences=True)(embeddings)
     layer = LSTM(32, return_sequences=False)(layer)
-    layer = Dense(dict_size)(layer)
+    layer = Dense(dict_size, activation='softmax')(layer)
 
     lstm_model = Model(input=bodies, output=layer)
-    lstm_model.compile('rmsprop', 'mse')
+
+    lstm_model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
 
     return lstm_model
 
+def predict_w_model(lstm_model, X_test, y_test, idx_word_dct, save_filepath): 
+    """Predict on an individual X using the inputted model. 
+
+    After predicting, save the final to a file with associated timestamp. 
+
+    Args: 
+    ----
+        lstm_model: keras.model.Model object
+        X_test: 1d np.ndarray
+            Contains 1 body of an article body pair to use for prediction
+        y_test: list of ints
+        idx_word_dct: dct
+            Holds mapping of indices to words. 
+        save_filepath: str
+    """
+    
+    input_lst = X_test.tolist()
+    y_pred = []
+    for _ in range(len(y_test)): 
+        # This is either messy here or below when updating input_lst. There's 
+        # probably a better way. 
+        pred_X = np.array(input_lst)[np.newaxis]
+        pred_vector = lstm_model.predict(pred_X)
+        pred = np.argmax(pred_vector)
+
+        y_pred.append(pred)
+        input_lst = input_lst[1:]
+        input_lst.append(pred)
+
+    predicted_heading = ' '.join(idx_word_dct[idx] for idx in y_pred)
+    actual_heading = ' '.join(idx_word_dct[idx] for idx in y_test)
+
+    with open(save_filepath, 'a+') as f: 
+        out_str = '{} \n {} \n'.format(predicted_heading, actual_heading)
+        f.write(out_str)
+        
 if __name__ == '__main__': 
     # Unfortunately, there are no real time savings from doing the following data   
     # loading and pre-processing ahead of time, which is why it's done here. 
@@ -65,3 +104,9 @@ if __name__ == '__main__':
 
     lstm_model = make_model(embedding_weights, input_length=maxlen)
     lstm_model.fit(X, y, nb_epoch=1)
+
+    dt = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
+    preds_filepath = 'work/preds/{}.txt'.format(dt)
+    for idx in range(5): 
+        predict_w_model(lstm_model, X[idx], headlines_arr[idx], idx_word_dct,
+                        preds_filepath)
