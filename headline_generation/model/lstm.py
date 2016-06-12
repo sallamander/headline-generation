@@ -50,18 +50,16 @@ if __name__ == '__main__':
     wrd_embedding = return_data("word_embedding")
     bodies, headlines = return_data("articles")
 
-    idx_dct, vector_dct = create_mapping_dicts(wrd_embedding)
-    embedding_weights = gen_embedding_weights(idx_dct, vector_dct)
+    word_idx_dct, idx_word_dct, word_vector_dct = create_mapping_dicts(wrd_embedding)
+    embedding_weights = gen_embedding_weights(word_idx_dct, word_vector_dct)
 
-    bodies_arr = vectorize_texts(bodies, idx_dct)
-    headlines_arr = vectorize_texts(headlines, idx_dct)
+    bodies_arr = vectorize_texts(bodies, word_idx_dct)
+    headlines_arr = vectorize_texts(headlines, word_idx_dct)
     X_s, y_s = filter_empties(bodies_arr, headlines_arr)
 
     input_length=50
     X_s = sequence.pad_sequences(X_s, input_length)
-    '''
     lstm_model = make_model(embedding_weights, input_length=input_length)
 
     test_X = X_s[0:32]
     output_test = lstm_model.predict(test_X)
-    ''' 
