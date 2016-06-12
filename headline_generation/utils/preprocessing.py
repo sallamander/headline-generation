@@ -140,3 +140,24 @@ def vectorize_texts(texts, idx_dct):
 
     return vectorized_words_arr
 
+def filter_empties(bodies_arr, headlines_arr): 
+    """Filter out bodies/headline pairs where the headline is empty.
+
+    Args: 
+    ----
+        bodies_arr: 1d np.ndarray
+        headlines_arr: 1d np.ndarray
+
+    Return: 
+    ------
+        filtered_bodies: 1d np.ndarray
+        filered_headlines: 1d np.ndarray
+    """
+
+    non_empty_idx = np.where(headlines_arr != -99)[0]
+    filtered_bodies = bodies_arr[non_empty_idx]
+    filtered_headlines = headlines_arr[non_empty_idx]
+
+    return filtered_bodies, filtered_headlines
+
+

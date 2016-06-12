@@ -9,7 +9,7 @@ from keras.layers.recurrent import LSTM
 from keras.models import Sequential
 from gensim.models.word2vec import Word2Vec
 from headline_generation.utils.preprocessing import create_mapping_dicts, \
-        gen_embedding_weights, vectorize_texts, return_data 
+        gen_embedding_weights, vectorize_texts, return_data, filter_empties
 
 
 def make_model(embedding_weights, max_features=300, batch_size=32, input_length=50):
@@ -51,10 +51,7 @@ if __name__ == '__main__':
 
     bodies_arr = vectorize_texts(bodies, idx_dct)
     headlines_arr = vectorize_texts(headlines, idx_dct)
-
-    non_empty_idx = np.where(headlines_arr != -99)[0]
-    X_s = bodies_arr[non_empty_idx]
-    y_s = headlines_arr[non_empty_idx]
+    X_s, y_s = filter_empties(bodies_arr, headlines_arr)
 
     input_length=50
     X_s = sequence.pad_sequences(X_s, input_length)
