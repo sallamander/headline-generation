@@ -121,53 +121,36 @@ def _vec_txt(words, word_idx_dct):
 
     return vectorized_words_lst
 
-def vectorize_texts(texts, word_idx_dct): 
+def vectorize_texts(bodies, headlines, word_idx_dct): 
     """Translate each of the inputted text's words into numbers. 
 
     This calls the helper function `_vectorize_text`. 
 
     Args: 
     ----
-        texts: list of lists 
+        bodies: list of lists of strings
+        headlines: list of lists of strings
         word_idx_dct: dct
 
     Return: 
     ------
-        vectorized_words_arr: 1d np.ndarray
+        vec_bodies_arr: 1d np.ndarray
+        vec_headlines_arr: 1d np.ndarray
     """
 
-    vec_texts = []
-    for text in texts:  
-        vec_text = _vec_txt(text, word_idx_dct)
-        if vec_text: 
-            vec_texts.append(vec_text)
-        else: 
-            # Used to later filter out empty vec_text.
-            vec_texts.append(np.array(-99))
+    vec_bodies = []
+    vec_headlines = []
+    for body, headline in zip(bodies, headlines):  
+        vec_body = _vec_txt(body, word_idx_dct)
+        vec_headline = _vec_txt(headline, word_idx_dct)
+        if vec_body and vec_headline: 
+            vec_bodies.append(vec_body)
+            vec_headlines.append(vec_headline)
+    
+    vec_bodies_arr = np.array(vec_bodies)
+    vec_headlines_arr = np.array(vec_headlines)
 
-    vectorized_words_arr = np.array(vec_texts)
-
-    return vectorized_words_arr
-
-def filter_empties(bodies_arr, headlines_arr): 
-    """Filter out bodies/headline pairs where the headline is empty.
-
-    Args: 
-    ----
-        bodies_arr: 1d np.ndarray
-        headlines_arr: 1d np.ndarray
-
-    Return: 
-    ------
-        filtered_bodies: 1d np.ndarray
-        filered_headlines: 1d np.ndarray
-    """
-
-    non_empty_idx = np.where(headlines_arr != -99)[0]
-    filtered_bodies = bodies_arr[non_empty_idx]
-    filtered_headlines = headlines_arr[non_empty_idx]
-
-    return filtered_bodies, filtered_headlines
+    return vec_bodies_arr, vec_headlines_arr
 
 def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1): 
     """Format the body and headline arrays into the X,y matrices fed into the LSTM.
