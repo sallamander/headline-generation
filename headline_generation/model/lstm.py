@@ -10,8 +10,8 @@ from keras.models import Model
 from headline_generation.utils.preprocessing import gen_embedding_weights, \
         vectorize_texts, format_inputs
 from headline_generation.utils.data_io import return_data
-from headline_generation.utils.mappings import create_mapping_dicts
-
+from headline_generation.utils.mappings import create_mapping_dicts, \
+        map_idxs_to_str, map_xy_to_str
 
 def make_model(embedding_weights, max_features=300, batch_size=32, input_length=50):
     """Build an LSTM based off the input parameters and return it compiled. 
@@ -76,8 +76,8 @@ def predict_w_model(lstm_model, X_test, y_test, idx_word_dct, save_filepath):
         input_lst = input_lst[1:]
         input_lst.append(pred)
 
-    predicted_heading = ' '.join(idx_word_dct[idx] for idx in y_pred)
-    actual_heading = ' '.join(idx_word_dct[idx] for idx in y_test)
+    predicted_heading = map_idxs_to_str(y_pred, idx_word_dct) 
+    actual_heading = map_idxs_to_str(y_test, idx_word_dct) 
 
     with open(save_filepath, 'a+') as f: 
         out_str = '{} \n {} \n'.format(predicted_heading, actual_heading)

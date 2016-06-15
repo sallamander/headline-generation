@@ -1,6 +1,8 @@
 import pytest
+import numpy as np
 from gensim.models.word2vec import Word2Vec
-from headline_generation.utils.mappings import create_mapping_dicts
+from headline_generation.utils.mappings import create_mapping_dicts, \
+        map_idxs_to_str, map_xy_to_str
 
 class TestMappings: 
 
@@ -56,4 +58,45 @@ class TestMappings:
         assert (len(word_idx_dct) <= len(test_vocab))
         assert (len(idx_word_dct) <= len(test_vocab))
         assert (len(word_vector_dct) <= len(test_vocab))
+
+    def test_map_idxs_to_str(self): 
+
+        idx_word_dct = {0: 'Hello', 1: 'Goodbye', 2: 'TSwift', 3: 'Kanye'}
+
+        idx_lst1 = [0, 2]
+        idx_lst2 = [1, 3]
+        
+        stringified1 = map_idxs_to_str(idx_lst1, idx_word_dct)
+        stringified2 = map_idxs_to_str(idx_lst2, idx_word_dct)
+
+        assert (stringified1 == 'Hello TSwift')
+        assert (stringified2 == 'Goodbye Kanye')
+
+    def test_map_xy_to_str(self): 
+        
+        idx_word_dct = {0: 'PCA', 1: 'SVD', 2: 'NMF', 3: '?', 4: '!'}
+
+        x1, y1 = np.array([0, 1, 2, 3]), np.array([0, 0, 0, 0, 1])
+        x2, y2 = np.array([1, 1, 3, 3]), np.array([1, 0, 0, 0, 0])
+        x3, y3 = np.array([2, 1, 3, 3]), np.array([1, 0, 1, 0, 1])
+        x4, y4 = np.array([2, 2, 2, 2]), np.array([1, 1, 1, 1, 1])
+        x5, y5 = np.array([0, 0, 0, 0]), np.array([0, 0, 0, 0, 0])
+
+        xs = [x1, x2, x3, x4, x5]
+        ys = [y1, y2, y3, y4, y5]
+
+        act_x1, act_y1 = "PCA SVD NMF ?", "!"
+        act_x2, act_y2 = "SVD SVD ? ?", "PCA"
+        act_x3, act_y3 = "NMF SVD ? ?", "PCA NMF !"
+        act_x4, act_y4 = "NMF NMF NMF NMF", "PCA SVD NMF ? !"
+        act_x5, act_y5 = "PCA PCA PCA PCA", ""
+
+        act_xs = [act_x1, act_x2, act_x3, act_x4, act_x5]
+        act_ys = [act_y1, act_y2, act_y3, act_y4, act_y5]
+
+        for raw_x, raw_y, act_x, act_y in zip(xs, ys, act_xs, act_ys): 
+            map_x, map_y = map_xy_to_str(raw_x, raw_y, idx_word_dct)
+            
+            assert (map_x == act_x)
+            assert (map_y == act_y)
 

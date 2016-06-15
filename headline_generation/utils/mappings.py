@@ -1,6 +1,7 @@
 """A module for generating word/idx/vector mappings and moving between them. """
 
 from gensim.corpora.dictionary import Dictionary
+import numpy as np
 
 def create_mapping_dicts(wrd_embedding, filter_corpus=False, bodies=None,
                          headlines=None): 
@@ -68,3 +69,45 @@ def _filter_corpus(bodies, headlines, wrd_embedding):
     wrd_embedding.vocab = new_vocab_dct
 
     return wrd_embedding
+
+def map_idxs_to_str(idx_lst, idx_word_dct): 
+    """Return a string by mapping integers in the `idx_lst` to words. 
+
+    Args: 
+    ----
+        idx_lst: list of ints 
+        idx_word_dct: dict 
+
+    Return: 
+    ------
+        stringified: str
+    """
+
+    stringified = ' '.join(idx_word_dct[idx] for idx in idx_lst)
+    return stringified 
+
+def map_xy_to_str(x, y, idx_word_dct): 
+    """Return a string for an inputted x and y. 
+
+    Since the x vector contains all ints, simply run it through `map_idx_to_str`. 
+    The y vector is one-hot encoded, meaning we need to grab the index corresponding
+    to the 1 and then run that through `map_idxs_to_str`. 
+
+    Args: 
+    ----
+        x: 1d np.ndarray
+        y: 1d np.ndarray
+        idx_word_dct: dict
+
+    Return: 
+    ------
+        stringified_x: str
+        stringified_y: str
+    """
+
+    stringified_x = map_idxs_to_str(x, idx_word_dct)
+    y_hot_idx = np.where(y == 1)[0]
+    stringified_y = map_idxs_to_str(y_hot_idx, idx_word_dct)
+
+    return stringified_x, stringified_y
+
