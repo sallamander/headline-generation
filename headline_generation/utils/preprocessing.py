@@ -217,7 +217,8 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
     # This is much faster than inserting in the above loop.
     y_s = np.zeros((X_s.shape[0], vocab_size)).astype('int32')
     idx = np.arange(X_s.shape[0])
-    y_s[idx, ys] = 1
+    for idx, y in enumerate(ys):
+        y_s[idx, y] = 1
 
     return X_s, y_s
 

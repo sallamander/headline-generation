@@ -9,7 +9,7 @@ from keras.layers.recurrent import LSTM
 from keras.layers.core import Dense
 from keras.models import Model
 from headline_generation.utils.preprocessing import create_mapping_dicts, \
-        gen_embedding_weights, vectorize_texts, filter_empties, format_inputs
+        gen_embedding_weights, vectorize_texts, format_inputs
 from headline_generation.utils.data_io import return_data
 
 
@@ -88,25 +88,24 @@ if __name__ == '__main__':
     # loading and pre-processing ahead of time, which is why it's done here. 
     wrd_embedding = return_data("word_embedding")
     bodies, headlines = return_data("articles")
+    bodies, headlines = bodies[0:2], headlines[0:2]
 
     word_idx_dct, idx_word_dct, word_vector_dct = \
             create_mapping_dicts(wrd_embedding, filter_corpus=True, bodies=bodies, 
                                  headlines=headlines)
     embedding_weights = gen_embedding_weights(word_idx_dct, word_vector_dct)
 
-    bodies_arr = vectorize_texts(bodies, word_idx_dct)
-    headlines_arr = vectorize_texts(headlines, word_idx_dct)
-    bodies_arr, headlines_arr = filter_empties(bodies_arr, headlines_arr)
+    bodies_arr, headlines_arr = vectorize_texts(bodies, headlines, word_idx_dct)
     vocab_size = len(word_vector_dct)
     maxlen = 50
     X, y = format_inputs(bodies_arr, headlines_arr, vocab_size=vocab_size, 
                          maxlen=maxlen)
 
     lstm_model = make_model(embedding_weights, input_length=maxlen)
-    lstm_model.fit(X, y, nb_epoch=1)
+    lstm_model.fit(X, y, nb_epoch=2000)
 
     dt = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
     preds_filepath = 'work/preds/{}.txt'.format(dt)
-    for idx in range(5): 
+    for idx in range(2): 
         predict_w_model(lstm_model, X[idx], headlines_arr[idx], idx_word_dct,
                         preds_filepath)

@@ -34,7 +34,7 @@ class TestPreprocessing:
         del cls.bodies
         del cls.headlines
         del cls.vec_bodies_arr
-        del cls_vec_headlines_arr
+        del cls.vec_headlines_arr
 
     def test_mapping_dicts(self): 
 
@@ -83,3 +83,32 @@ class TestPreprocessing:
         assert (vec_bodies_arr.shape[0] <= len(self.bodies))
         assert (vec_headlines_arr.shape[0] <= len(self.headlines))
         
+    def test_format_inputs(self): 
+
+        X, y = format_inputs(self.vec_bodies_arr, self.vec_headlines_arr, 
+                             len(self.vocab), maxlen=2, step=1)
+
+        assert (X.shape[0] == 4)
+        assert (X.shape[1] == 2)
+        assert (y.shape[0] == 4)
+        assert (y.shape[1] == len(self.vocab))
+        
+        x0_str = ' '.join(self.idx_word_dct[idx] for idx in X[0])
+        x1_str = ' '.join(self.idx_word_dct[idx] for idx in X[1])
+        x2_str = ' '.join(self.idx_word_dct[idx] for idx in X[2])
+        x3_str = ' '.join(self.idx_word_dct[idx] for idx in X[3])
+
+        assert (x0_str == "body1 words")
+        assert (x1_str == "words and")
+        assert (x2_str == "body2 more")
+        assert (x3_str == "more words")
+        
+        y0_idx, y1_idx = np.where(y[0] == 1)[0][0], np.where(y[1] == 1)[0][0]
+        y2_idx, y3_idx = np.where(y[2] == 1)[0][0], np.where(y[3] == 1)[0][0] 
+        y0_str, y1_str = self.idx_word_dct[y0_idx], self.idx_word_dct[y1_idx] 
+        y2_str, y3_str = self.idx_word_dct[y2_idx], self.idx_word_dct[y3_idx] 
+
+        assert (y0_str == "words")
+        assert (y1_str == "?")
+        assert (y2_str == "parrots")
+        assert (y3_str == "?")
