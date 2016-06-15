@@ -71,9 +71,9 @@ class TestPreprocessing:
         x3_str = ' '.join(self.idx_word_dct[idx] for idx in X[3])
 
         assert (x0_str == "body1 words")
-        assert (x1_str == "words and")
+        assert (x1_str == "words words")
         assert (x2_str == "body2 more")
-        assert (x3_str == "more words")
+        assert (x3_str == "more parrots")
         
         y0_idx, y1_idx = np.where(y[0] == 1)[0][0], np.where(y[1] == 1)[0][0]
         y2_idx, y3_idx = np.where(y[2] == 1)[0][0], np.where(y[3] == 1)[0][0] 

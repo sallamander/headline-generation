@@ -5,6 +5,7 @@ embedding to vectorize them.
 """
 
 import numpy as np
+from headline_generation.utils.mappings import map_idxs_to_str
 
 def gen_embedding_weights(word_idx_dct, word_vector_dct): 
     """Generate the initial embedding weights.
@@ -129,7 +130,7 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
         max_hline_len = (len_body - maxlen) // step
 
         if len_hline <= max_hline_len: 
-            clipped_body = body[:(maxlen + len_hline)]
+            clipped_body = body[:maxlen]
             clipped_body.extend(hline)
             master_arr.append((clipped_body, len_hline))
 
@@ -140,7 +141,7 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
             X_end = X_start + maxlen
             X = np.array(body_n_hline[X_start:X_end])[np.newaxis]
 
-            y_start = idx + maxlen + len_hline
+            y_start = idx + maxlen 
             y_end = y_start + 1
             y = np.array(body_n_hline[y_start:y_end])[np.newaxis]
 
