@@ -84,7 +84,7 @@ def vectorize_texts(bodies, headlines, word_idx_dct):
     vec_bodies_arr = np.array(vec_bodies)
     vec_headlines_arr = np.array(vec_headlines)
 
-    return vec_bodies_arr, vec_headlines_arr
+    return vec_bodies_arr, vec_headlines_arr 
 
 def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1): 
     """Format the body and headline arrays into the X,y matrices fed into the LSTM.
@@ -105,8 +105,8 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
     
     Args: 
     ----
-        bodies_arr: 1d np.ndarray of lists of strings
-        headlines_arr: 1d np.ndarray of lists of strings
+        bodies_arr: 1d np.ndarray of lists 
+        headlines_arr: 1d np.ndarray of lists
         vocab_size: int
         maxlen (optional): int
             How long to make the X sequences used for predicting. 
@@ -118,12 +118,16 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
     ------
         X_s: 2d np.ndarray
         y_s: 2d np.ndarray
+        filtered_bodies: list 
+        filtered_headlines: list
     """
 
     X_s = np.zeros((0, maxlen)).astype('int32')
     ys = np.zeros((0, 1)).astype('int32')
 
     master_arr = []
+    filtered_bodies = []
+    filtered_headlines = []
     for body, hline in zip(bodies_arr, headlines_arr): 
 
         len_body, len_hline = len(body), len(hline)
@@ -133,6 +137,9 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
             clipped_body = body[:maxlen]
             clipped_body.extend(hline)
             master_arr.append((clipped_body, len_hline))
+            filtered_bodies.append(body)
+            filtered_headlines.append(hline)
+
 
 
     for body_n_hline, len_hline in master_arr:
@@ -154,5 +161,5 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
     for idx, y in enumerate(ys):
         y_s[idx, y] = 1
 
-    return X_s, y_s
+    return X_s, y_s, filtered_bodies, filtered_headlines
 

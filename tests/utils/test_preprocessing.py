@@ -46,19 +46,19 @@ class TestPreprocessing:
 
     def test_vectorize_texts(self): 
          
-        vec_bodies_arr, vec_headlines_arr  = vectorize_texts(self.bodies, 
-                                                             self.headlines, 
-                                                             self.word_idx_dct)
+        assert (type(self.vec_bodies_arr) == np.ndarray)
+        assert (type(self.vec_headlines_arr) == np.ndarray)
+        assert (self.vec_bodies_arr.shape[0] <= len(self.bodies))
+        assert (self.vec_headlines_arr.shape[0] <= len(self.headlines))
 
-        assert (type(vec_bodies_arr) == np.ndarray)
-        assert (type(vec_headlines_arr) == np.ndarray)
-        assert (vec_bodies_arr.shape[0] <= len(self.bodies))
-        assert (vec_headlines_arr.shape[0] <= len(self.headlines))
-        
     def test_format_inputs(self): 
 
-        X, y = format_inputs(self.vec_bodies_arr, self.vec_headlines_arr, 
-                             len(self.vocab), maxlen=2, step=1)
+        X, y, filtered_bodies, filtered_headlines = \
+                format_inputs(self.vec_bodies_arr, self.vec_headlines_arr, 
+                              len(self.vocab), maxlen=2, step=1)
+
+        assert (len(filtered_bodies) <= self.vec_bodies_arr.shape[0])
+        assert (len(filtered_headlines) <= self.vec_headlines_arr.shape[0])
 
         assert (X.shape[0] == 4)
         assert (X.shape[1] == 2)

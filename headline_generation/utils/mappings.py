@@ -73,6 +73,9 @@ def _filter_corpus(bodies, headlines, wrd_embedding):
 def map_idxs_to_str(idx_lst, idx_word_dct): 
     """Return a string by mapping integers in the `idx_lst` to words. 
 
+    Serves primarily as a helper function to `map_xy_to_str`, but is built alone to 
+    allow external calls. 
+
     Args: 
     ----
         idx_lst: list of ints 
