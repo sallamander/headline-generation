@@ -2,15 +2,15 @@
 
 import datetime
 import numpy as np
-from keras.preprocessing import sequence
 from keras.layers import Input
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 from keras.layers.core import Dense
 from keras.models import Model
-from headline_generation.utils.preprocessing import create_mapping_dicts, \
-        gen_embedding_weights, vectorize_texts, format_inputs
+from headline_generation.utils.preprocessing import gen_embedding_weights, \
+        vectorize_texts, format_inputs
 from headline_generation.utils.data_io import return_data
+from headline_generation.utils.mappings import create_mapping_dicts
 
 
 def make_model(embedding_weights, max_features=300, batch_size=32, input_length=50):

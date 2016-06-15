@@ -4,7 +4,7 @@ import pickle
 from gensim.models.word2vec import Word2Vec
 
 def return_data(data_type): 
-    """Return the data specified by the inputted data_type.
+    """Return the data specified by the inputted `data_type`.
 
     This function is built to allow for easier calls for the data from scripts
     external to this one. 

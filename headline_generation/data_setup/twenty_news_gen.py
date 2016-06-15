@@ -21,7 +21,8 @@ def grab_body_headline(article):
 
     Return: 
     ------
-        (body, headline): tuple 
+        (body, headline): tuple of strings
+            Returns (None, None) if no body and/or headline is found. 
     """
 
     found_headline = re.findall("(?<=Subject:)(.*)", article)
@@ -39,8 +40,7 @@ def grab_body_headline(article):
 def clean_raw_txt(body, headline, punct_dct=None, stopwrds_set=None): 
     """Clean the body and headline to remove punctuation, stopwords, etc.
 
-    Clean the text according to the input specifications. Options to clean only
-    in certain ways are included to allow for flexibility down the line. 
+    Clean the text according to the input specifications. 
 
     Args: 
     ----
@@ -49,7 +49,6 @@ def clean_raw_txt(body, headline, punct_dct=None, stopwrds_set=None):
         punct_dct (optional): dict 
             Translation dict resulting from a `str.maketrans()` call             
         stopwords_set (optional): set  
-            Translation dict resulting from a `str.maketrans()` call 
 
     Return: 
     ------
@@ -73,7 +72,6 @@ if __name__ == '__main__':
     articles = fetch_20newsgroups(subset='all').data
     bodies_n_headlines = [grab_body_headline(article) for article in articles]
 
-    # Create these translations here so they're only created once. 
     punct_dct = str.maketrans({punct_mark: "" for punct_mark in string.punctuation})
     stopwrds_set = set(stopwords.words('english'))
     
