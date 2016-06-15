@@ -6,4 +6,4 @@ This paper has applications for *text summarization* across any body of text, an
 
 ## Current Status
 
-This project was started on June 10th, 2016... so hopefully there's some reasonable looking stuff by the time you're looking at it. 
+At this point, I've been able to overfit and perfectly predict a small training set (5 body/headline pairs) with the pre-processing and architecture I have set up. Now it's time to crank up the juice! 
