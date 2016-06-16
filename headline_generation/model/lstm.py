@@ -7,6 +7,7 @@ from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
 from keras.layers.core import Dense
 from keras.models import Model
+from keras.callbacks import EarlyStopping
 from headline_generation.utils.preprocessing import gen_embedding_weights, \
         vectorize_texts, format_inputs
 from headline_generation.utils.data_io import return_data
@@ -46,6 +47,34 @@ def make_model(embedding_weights, max_features=300, batch_size=32, input_length=
     lstm_model = Model(input=bodies, output=layer)
 
     lstm_model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
+
+    return lstm_model
+
+def fit_model(lstm_model, nb_epoch=10, early_stopping_tol=0, validation_split=0.0): 
+    """Fit the inputted LSTM model according to the inputted specifications. 
+
+    Args: 
+    ----
+        lstm_model: compiled keras.model.Model object
+        nb_epoch (optional): int 
+        early_stopping_tol (optional): int 
+            Holds the `patience` to pass into a keras.callbacks.EarlyStopping object
+        val_split (optional): float 
+            Holds the `validation_split` to pass into the `fit` method on the 
+            lstm_model
+
+    Returns: 
+    -------
+        lstm_model: fitted keras.model.Model object
+    """
+    
+    callbacks = []
+    if early_stopping_tol: 
+        monitor = 'loss' if not validation_split else 'val_loss'
+        early_stopping = EarlyStopping(monitor=monitor, patience=early_stopping_tol)
+        callbacks.append(early_stopping) 
+    lstm_model.fit(X, y, nb_epoch=nb_epoch, callbacks=callbacks,
+                   validation_split=validation_split)
 
     return lstm_model
 
@@ -92,7 +121,6 @@ def predict_w_model(lstm_model, X, y, headlines, idx_word_dct, save_filepath=Non
 
             row_idx += 1
 
-
 if __name__ == '__main__': 
     # Unfortunately, there are no real time savings from doing the following data   
     # loading and pre-processing ahead of time, which is why it's done here. 
@@ -114,7 +142,8 @@ if __name__ == '__main__':
                                                               maxlen=maxlen)
 
     lstm_model = make_model(embedding_weights, input_length=maxlen)
-    lstm_model.fit(X, y, nb_epoch=5000)
+    lstm_model = fit_model(lstm_model, nb_epoch=500, early_stopping_tol=50, 
+                           validation_split=0.10)
 
     dt = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
     preds_filepath = 'work/preds/{}.txt'.format(dt)
