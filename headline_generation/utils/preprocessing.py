@@ -122,33 +122,35 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
         filtered_headlines: list
     """
 
-    X_s = np.zeros((0, maxlen)).astype('int32')
+    X_s = np.zeros((0, maxlen + 1)).astype('int32')
     ys = np.zeros((0, 1)).astype('int32')
 
     master_arr = []
     filtered_bodies = []
     filtered_headlines = []
     for body, hline in zip(bodies_arr, headlines_arr): 
-
+        
         len_body, len_hline = len(body), len(hline)
         max_hline_len = (len_body - maxlen) // step
 
         if len_hline <= max_hline_len: 
             clipped_body = body[:maxlen]
+            # Append a 0 to the body and headline to indicate an EOF character. 
+            clipped_body.append(0)
+            hline.append(0)
+            len_hline += 1
             clipped_body.extend(hline)
             master_arr.append((clipped_body, len_hline))
             filtered_bodies.append(body)
             filtered_headlines.append(hline)
 
-
-
     for body_n_hline, len_hline in master_arr:
         for idx in range(0, len_hline, step): 
             X_start = idx
-            X_end = X_start + maxlen
+            X_end = X_start + maxlen + 1
             X = np.array(body_n_hline[X_start:X_end])[np.newaxis]
 
-            y_start = idx + maxlen 
+            y_start = idx + maxlen + 1
             y_end = y_start + 1
             y = np.array(body_n_hline[y_start:y_end])[np.newaxis]
 

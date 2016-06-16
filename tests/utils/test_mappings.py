@@ -21,6 +21,7 @@ class TestMappings:
         cls.word2vec_model = Word2Vec(sentences, min_count=1, size=len(cls.vocab))
         cls.word_idx_dct, cls.idx_word_dct, cls.word_vector_dct = \
                 create_mapping_dicts(cls.word2vec_model)
+        cls.vocab.add('\n')
     
     def teardown_class(cls): 
         del cls.vocab

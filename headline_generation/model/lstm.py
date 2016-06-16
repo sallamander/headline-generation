@@ -12,7 +12,7 @@ from headline_generation.utils.preprocessing import gen_embedding_weights, \
         vectorize_texts, format_inputs
 from headline_generation.utils.data_io import return_data
 from headline_generation.utils.mappings import create_mapping_dicts, \
-        map_idxs_to_str, map_xy_to_str
+        map_idxs_to_str
 from headline_generation.model.eval_model import generate_sequence
 
 def make_model(embedding_weights, max_features=300, batch_size=32, input_length=50):
@@ -67,14 +67,16 @@ def fit_model(lstm_model, nb_epoch=10, early_stopping_tol=0, validation_split=0.
     -------
         lstm_model: fitted keras.model.Model object
     """
-    
     callbacks = []
     if early_stopping_tol: 
         monitor = 'loss' if not validation_split else 'val_loss'
         early_stopping = EarlyStopping(monitor=monitor, patience=early_stopping_tol)
         callbacks.append(early_stopping) 
-    lstm_model.fit(X, y, nb_epoch=nb_epoch, callbacks=callbacks,
-                   validation_split=validation_split)
+    
+    # Fit over a range to look at predictions per epoch. 
+    for epoch in range(nb_epoch):
+        lstm_model.fit(X, y, nb_epoch=1, callbacks=callbacks,
+                       validation_split=validation_split)
 
     return lstm_model
 
@@ -104,19 +106,19 @@ def predict_w_model(lstm_model, X, y, headlines, idx_word_dct, save_filepath=Non
             x, y_test = X[row_idx], y[row_idx]
             if not word_num: 
                 seq_length = len(hline)
-                y_pred = generate_sequence(lstm_model, x, seq_length)
+                y_pred = generate_sequence(lstm_model, x)
             else: 
                 x = x[np.newaxis]
                 y_pred = lstm_model.predict(x)
                 y_pred = [np.argmax(y_pred)]
                 hline = np.where(y_test == 1)[0] 
-                
-
+            
             predicted_heading = map_idxs_to_str(y_pred, idx_word_dct) 
             actual_heading = map_idxs_to_str(hline, idx_word_dct) 
 
             with open(save_filepath, 'a+') as f: 
-                out_str = '{} \n {} \n'.format(predicted_heading, actual_heading)
+                out_str = '{} \n {} \n'.format(repr(predicted_heading),
+                                               repr(actual_heading))
                 f.write(out_str)
 
             row_idx += 1
@@ -126,7 +128,7 @@ if __name__ == '__main__':
     # loading and pre-processing ahead of time, which is why it's done here. 
     wrd_embedding = return_data("word_embedding")
     bodies, headlines = return_data("articles")
-    bodies, headlines = bodies[0:10], headlines[0:10]
+    bodies, headlines = bodies[0:3], headlines[0:3]
 
     word_idx_dct, idx_word_dct, word_vector_dct = \
             create_mapping_dicts(wrd_embedding, filter_corpus=True, bodies=bodies, 
@@ -134,16 +136,16 @@ if __name__ == '__main__':
     embedding_weights = gen_embedding_weights(word_idx_dct, word_vector_dct)
 
     bodies_arr, headlines_arr = vectorize_texts(bodies, headlines, word_idx_dct)
-    vocab_size = len(word_vector_dct)
+    vocab_size = len(embedding_weights)
     maxlen = 50
     X, y, filtered_bodies, filtered_headlines = format_inputs(bodies_arr,     
                                                               headlines_arr, 
                                                               vocab_size=vocab_size, 
                                                               maxlen=maxlen)
 
+    maxlen += 1 # Account for newline characters added in. 
     lstm_model = make_model(embedding_weights, input_length=maxlen)
-    lstm_model = fit_model(lstm_model, nb_epoch=500, early_stopping_tol=50, 
-                           validation_split=0.10)
+    lstm_model = fit_model(lstm_model, nb_epoch=5000, early_stopping_tol=50)
 
     dt = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
     preds_filepath = 'work/preds/{}.txt'.format(dt)

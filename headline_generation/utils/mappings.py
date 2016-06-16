@@ -34,9 +34,16 @@ def create_mapping_dicts(wrd_embedding, filter_corpus=False, bodies=None,
     gensim_dct = Dictionary()
     gensim_dct.doc2bow(wrd_embedding.vocab.keys(), allow_update=True)
 
-    word_idx_dct = {wrd: idx for idx, wrd in gensim_dct.items()}
-    idx_word_dct = {idx: wrd for idx, wrd in gensim_dct.items()}
+    # Leave index 0 for the newline character
+    word_idx_dct = {wrd: (idx + 1) for idx, wrd in gensim_dct.items()}
+    idx_word_dct = {(idx + 1): wrd for idx, wrd in gensim_dct.items()}
+    word_idx_dct['\n'] = 0
+    idx_word_dct[0] = '\n'
+
+    
     word_vector_dct = {wrd: wrd_embedding[wrd] for idx, wrd in gensim_dct.items()}
+    vec_dim = next(len(value) for value in word_vector_dct.values())
+    word_vector_dct['\n'] = np.zeros((vec_dim))
 
     return word_idx_dct, idx_word_dct, word_vector_dct 
 
