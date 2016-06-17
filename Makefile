@@ -3,6 +3,7 @@ work/.folder_structure_sentinel:
 	mkdir data/word_embeddings
 
 	mkdir -p work/preds
+	mkdir work/weights
 
 	touch work/.folder_structure_sentinel
 
@@ -26,4 +27,15 @@ data/word_embeddings/glove.6B.50d.txt:
 	mv *.txt data/word_embeddings
 	rm glove.6B.zip
 
+########################################
+# Twenty news pickled bodies/headlines #
+########################################
+
+bodies.pkl: headline_generation/data_setup/twenty_news_gen.py
+	python headline_generation/data_setup/twenty_news_gen.py	
+
+headlines.pkl: headline_generation/data_setup/twenty_news_gen.py
+	python headline_generation/data_setup/twenty_news_gen.py	
+
 word_embeddings: data/word_embeddings/glove.6B.50d.txt 
+data: bodies.pkl headlines.pkl

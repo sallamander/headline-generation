@@ -1,5 +1,6 @@
 """A script for fitting an LSTM to generate headlines for article text."""
 
+import sys
 import datetime
 import numpy as np
 from keras.layers import Input
@@ -41,9 +42,10 @@ def make_model(embedding_weights, max_features=300, batch_size=32, input_length=
     bodies = Input(shape=(input_length,), dtype='int32') 
     embeddings = Embedding(input_dim=dict_size, output_dim=embedding_dim,
                            weights=[embedding_weights])(bodies)
-    layer = LSTM(32, return_sequences=True)(embeddings)
-    layer = LSTM(32, return_sequences=True)(embeddings)
-    layer = LSTM(32, return_sequences=False)(layer)
+    layer = LSTM(512, return_sequences=True)(embeddings)
+    layer = LSTM(512, return_sequences=True)(embeddings)
+    layer = LSTM(512, return_sequences=True)(embeddings)
+    layer = LSTM(512, return_sequences=False)(layer)
     layer = Dense(dict_size, activation='softmax')(layer)
 
     lstm_model = Model(input=bodies, output=layer)
@@ -147,11 +149,15 @@ def predict_w_model(lstm_model, X, y, headlines, idx_word_dct, save_filepath=Non
             row_idx += 1
 
 if __name__ == '__main__': 
+    try: 
+        embed_dim = sys.argv[1]
+    except: 
+        raise Exception("Usage: {} embed_dim".format(sys.argv[0]))
+        
     # Unfortunately, there are no real time savings from doing the following data   
     # loading and pre-processing ahead of time, which is why it's done here. 
-    wrd_embedding = return_data("word_embedding")
+    wrd_embedding = return_data("word_embedding", embed_dim=embed_dim)
     bodies, headlines = return_data("articles")
-    bodies, headlines = bodies[0:40], headlines[0:40]
 
     word_idx_dct, idx_word_dct, word_vector_dct = \
             create_mapping_dicts(wrd_embedding, filter_corpus=True, bodies=bodies, 
@@ -168,16 +174,19 @@ if __name__ == '__main__':
 
     X_test, y_test, X, y, test_hlines, filtered_headlines = return_xy_subset(X, y,
                                                                 filtered_headlines, 
-                                                                nobs=5, train=False)
+                                                                nobs=10, train=False)
     X_train, y_train, X, y, train_hlines, filtered_headlines = return_xy_subset(X, y,
                                                                   filtered_headlines, 
-                                                                  nobs=5, train=True)
+                                                                  nobs=10, train=True)
     maxlen += 1 # Account for newline characters added in. 
     dt = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
     preds_filepath = 'work/preds/{}'.format(dt)
 
-    lstm_model = make_model(embedding_weights, input_length=maxlen)
+    lstm_model = make_model(embedding_weights, input_length=maxlen, batch_size=256)
     lstm_model = fit_model(lstm_model, X, y, X_train, train_hlines, X_test,
-                           test_hlines, nb_epoch=5000, early_stopping_tol=50, 
+                           test_hlines, nb_epoch=35, early_stopping_tol=5, 
                            save_filepath=preds_filepath, on_epoch_end=True, 
-                           idx_word_dct=idx_word_dct)
+                           idx_word_dct=idx_word_dct, validation_split=0.20)
+    
+    weights_fname = 'work/weights/glove_{}.h5'.format(embed_dim)
+    lstm_model.save_weights(weights_fname, overwrite=True)

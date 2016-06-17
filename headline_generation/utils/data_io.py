@@ -3,7 +3,7 @@
 import pickle
 from gensim.models.word2vec import Word2Vec
 
-def return_data(data_type): 
+def return_data(data_type, embed_dim=50): 
     """Return the data specified by the inputted `data_type`.
 
     This function is built to allow for easier calls for the data from scripts
@@ -17,7 +17,7 @@ def return_data(data_type):
     """
 
     if data_type == "word_embedding": 
-        embedding_fp = 'data/word_embeddings/glove.6B.50d.txt'
+        embedding_fp = 'data/word_embeddings/glove.6B.{}d.txt'.format(embed_dim)
         wrd_embedding = Word2Vec.load_word2vec_format(embedding_fp, binary=False)
         return wrd_embedding
     elif data_type == "articles": 
