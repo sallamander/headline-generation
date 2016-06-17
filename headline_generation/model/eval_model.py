@@ -57,7 +57,7 @@ def return_xy_subset(X, y, headlines_arr, nobs=10, train=True):
         y_subset: 2d np.ndarray
         X: 2d np.ndarray
         y: 2d np.ndarray
-        headlines_arr: 1d np.ndarray
+        headlines: 1d np.ndarray 
     """
     
     X_subset = np.zeros((0, X.shape[1]))
@@ -77,4 +77,4 @@ def return_xy_subset(X, y, headlines_arr, nobs=10, train=True):
         y = y[row_idx:]
         headlines_arr = headlines_arr[nobs:]
 
-    return X_subset, y_subset, X, y, headlines_arr
+    return X_subset, y_subset, X, y, headlines, headlines_arr

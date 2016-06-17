@@ -14,6 +14,7 @@ from headline_generation.utils.preprocessing import gen_embedding_weights, \
 from headline_generation.utils.data_io import return_data
 from headline_generation.utils.mappings import create_mapping_dicts, \
         map_idxs_to_str
+from headline_generation.utils.keras_callbacks import PredictForEpoch
 from headline_generation.model.eval_model import generate_sequence, return_xy_subset
 
 def make_model(embedding_weights, max_features=300, batch_size=32, input_length=50):
@@ -52,7 +53,8 @@ def make_model(embedding_weights, max_features=300, batch_size=32, input_length=
     return lstm_model
 
 def fit_model(lstm_model, X_fit, y_fit, X_train, y_train, X_test, y_test, 
-              nb_epoch=10, early_stopping_tol=0, validation_split=0.0): 
+              nb_epoch=10, early_stopping_tol=0, validation_split=0.0, 
+              save_filepath=None, on_epoch_end=False, idx_word_dct=None): 
     """Fit the inputted LSTM model according to the inputted specifications. 
 
     (X_fit, y_fit) are used to actually fit the model, and both (X_train, y_train)
@@ -73,9 +75,14 @@ def fit_model(lstm_model, X_fit, y_fit, X_train, y_train, X_test, y_test,
         nb_epoch (optional): int 
         early_stopping_tol (optional): int 
             Holds the `patience` to pass into a keras.callbacks.EarlyStopping object
-        val_split (optional): float 
+        validation_split (optional): float 
             Holds the `validation_split` to pass into the `fit` method on the 
             lstm_model
+        save_filepath (optional): str
+            Holds where to save the predictions after each epoch
+        on_epoch_end (optional): boolean
+            Whether to log predictions on each epoch end. 
+        idx_word_dct (optional): dict
 
     Returns: 
     -------
@@ -86,11 +93,13 @@ def fit_model(lstm_model, X_fit, y_fit, X_train, y_train, X_test, y_test,
         monitor = 'loss' if not validation_split else 'val_loss'
         early_stopping = EarlyStopping(monitor=monitor, patience=early_stopping_tol)
         callbacks.append(early_stopping) 
+    if on_epoch_end: 
+        predict_per_epoch = PredictForEpoch(X_train, y_train, X_test, y_test, 
+                                            idx_word_dct, save_filepath)
+        callbacks.append(predict_per_epoch)
     
-    # Fit over a range to look at predictions per epoch. 
-    for epoch in range(nb_epoch):
-        lstm_model.fit(X, y, nb_epoch=1, callbacks=callbacks,
-                       validation_split=validation_split)
+    lstm_model.fit(X, y, nb_epoch=nb_epoch, callbacks=callbacks,
+                   validation_split=validation_split)
 
     return lstm_model
 
@@ -157,18 +166,18 @@ if __name__ == '__main__':
                                                               vocab_size=vocab_size, 
                                                               maxlen=maxlen)
 
-    X_test, y_test, X, y, filtered_headlines = return_xy_subset(X, y,
+    X_test, y_test, X, y, test_hlines, filtered_headlines = return_xy_subset(X, y,
                                                                 filtered_headlines, 
                                                                 nobs=5, train=False)
-    X_train, y_train, X, y, filtered_headlines = return_xy_subset(X, y,
+    X_train, y_train, X, y, train_hlines, filtered_headlines = return_xy_subset(X, y,
                                                                   filtered_headlines, 
                                                                   nobs=5, train=True)
     maxlen += 1 # Account for newline characters added in. 
-    lstm_model = make_model(embedding_weights, input_length=maxlen)
-    lstm_model = fit_model(lstm_model, X, y, X_train, y_train, X_test, y_test,
-                           nb_epoch=5000, early_stopping_tol=50)
-
     dt = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
-    preds_filepath = 'work/preds/{}.txt'.format(dt)
-    predict_w_model(lstm_model, X, y, filtered_headlines, idx_word_dct,
-                    preds_filepath)
+    preds_filepath = 'work/preds/{}'.format(dt)
+
+    lstm_model = make_model(embedding_weights, input_length=maxlen)
+    lstm_model = fit_model(lstm_model, X, y, X_train, train_hlines, X_test,
+                           test_hlines, nb_epoch=5000, early_stopping_tol=50, 
+                           save_filepath=preds_filepath, on_epoch_end=True, 
+                           idx_word_dct=idx_word_dct)
