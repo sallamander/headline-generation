@@ -8,12 +8,13 @@ from keras.layers.recurrent import LSTM
 from keras.layers.core import Dense
 from keras.models import Model
 from keras.callbacks import EarlyStopping
+from headline_generation.model.eval_model import return_xy_subset
 from headline_generation.utils.preprocessing import gen_embedding_weights, \
         vectorize_texts, format_inputs
 from headline_generation.utils.data_io import return_data
 from headline_generation.utils.mappings import create_mapping_dicts, \
         map_idxs_to_str
-from headline_generation.model.eval_model import generate_sequence
+from headline_generation.model.eval_model import generate_sequence, return_xy_subset
 
 def make_model(embedding_weights, max_features=300, batch_size=32, input_length=50):
     """Build an LSTM based off the input parameters and return it compiled. 
@@ -50,12 +51,25 @@ def make_model(embedding_weights, max_features=300, batch_size=32, input_length=
 
     return lstm_model
 
-def fit_model(lstm_model, nb_epoch=10, early_stopping_tol=0, validation_split=0.0): 
+def fit_model(lstm_model, X_fit, y_fit, X_train, y_train, X_test, y_test, 
+              nb_epoch=10, early_stopping_tol=0, validation_split=0.0): 
     """Fit the inputted LSTM model according to the inputted specifications. 
 
+    (X_fit, y_fit) are used to actually fit the model, and both (X_train, y_train)
+    and (X_test, y_test) are used to evaluate the model at the end of each epoch.
+    The idea is that we should see better and better predictions with both 
+    (X_train, y_train) and (X_test, y_test), but also be able to see how the model 
+    is doing on data it's not training on ((X_test, y_test)). 
+    
     Args: 
     ----
         lstm_model: compiled keras.model.Model object
+        X_fit: 2d np.ndarray
+        y_fit: 2d np.ndarray
+        X_train: 2d np.ndarray
+        y_train: 2d np.ndarray
+        X_test: 2d np.ndarray
+        y_test: 2d np.ndarray
         nb_epoch (optional): int 
         early_stopping_tol (optional): int 
             Holds the `patience` to pass into a keras.callbacks.EarlyStopping object
@@ -128,7 +142,7 @@ if __name__ == '__main__':
     # loading and pre-processing ahead of time, which is why it's done here. 
     wrd_embedding = return_data("word_embedding")
     bodies, headlines = return_data("articles")
-    bodies, headlines = bodies[0:3], headlines[0:3]
+    bodies, headlines = bodies[0:40], headlines[0:40]
 
     word_idx_dct, idx_word_dct, word_vector_dct = \
             create_mapping_dicts(wrd_embedding, filter_corpus=True, bodies=bodies, 
@@ -143,9 +157,16 @@ if __name__ == '__main__':
                                                               vocab_size=vocab_size, 
                                                               maxlen=maxlen)
 
+    X_test, y_test, X, y, filtered_headlines = return_xy_subset(X, y,
+                                                                filtered_headlines, 
+                                                                nobs=5, train=False)
+    X_train, y_train, X, y, filtered_headlines = return_xy_subset(X, y,
+                                                                  filtered_headlines, 
+                                                                  nobs=5, train=True)
     maxlen += 1 # Account for newline characters added in. 
     lstm_model = make_model(embedding_weights, input_length=maxlen)
-    lstm_model = fit_model(lstm_model, nb_epoch=5000, early_stopping_tol=50)
+    lstm_model = fit_model(lstm_model, X, y, X_train, y_train, X_test, y_test,
+                           nb_epoch=5000, early_stopping_tol=50)
 
     dt = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
     preds_filepath = 'work/preds/{}.txt'.format(dt)
