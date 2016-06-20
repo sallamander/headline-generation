@@ -11,7 +11,7 @@ def create_mapping_dicts(wrd_embedding, filter_corpus=False, bodies=None,
     ----
         wrd_embedding: gensim.models.word2vec.Word2Vec fitted model
         filter_corpus (optional): boolean  
-            Filter the corpus to only those words seen in the articles. 
+            Filter the corpus to only those words seen in the bodies/headlines. 
         bodies (optional): list of lists 
             Must be passed in if `filter_corpus` is True. 
         headlines (optional): list of lists  
@@ -69,10 +69,7 @@ def _filter_corpus(bodies, headlines, wrd_embedding):
     current_vocab = set(wrd_embedding.vocab.keys())
     filtered_vocab = current_vocab.intersection(new_vocab)
     
-    new_vocab_dct = {}
-    for word in filtered_vocab: 
-        new_vocab_dct[word] = wrd_embedding.vocab[word]
-    
+    new_vocab_dct = {word: wrd_embedding.vocab[word] for word in filtered_vocab}
     wrd_embedding.vocab = new_vocab_dct
 
     return wrd_embedding
@@ -121,3 +118,27 @@ def map_xy_to_str(x, y, idx_word_dct):
 
     return stringified_x, stringified_y
 
+def gen_embedding_weights(word_idx_dct, word_vector_dct): 
+    """Generate the initial embedding weights.
+
+    Args: 
+    ----
+        word_idx_dct: dict
+        word_vector_dct: dict
+
+    Return: 
+    ------
+        embedding_weights: 2d np.ndarry
+    """
+
+    n_words = len(word_idx_dct)
+    # A little gross, but avoids loading all keys/values into memory. We need 
+    # to access one of the lists and see how many dimensions each embedding has.
+    n_dim = next(len(word_vector_dct[word]) for word in word_vector_dct)
+
+    embedding_weights = np.zeros((n_words, n_dim))
+
+    for wrd, idx in word_idx_dct.items():
+        embedding_weights[idx, :] = word_vector_dct[wrd]
+
+    return embedding_weights

@@ -1,6 +1,5 @@
 """A script with Keras callback objects."""
 
-import numpy as np
 from keras.callbacks import Callback
 from headline_generation.model.eval_model import generate_sequence
 from headline_generation.utils.mappings import map_idxs_to_str
@@ -33,7 +32,7 @@ class PredictForEpoch(Callback):
         Args: 
         ----
             epoch: int
-            epoch_logs: 
+            epoch_logs: dict
         """
 
         train_preds = []

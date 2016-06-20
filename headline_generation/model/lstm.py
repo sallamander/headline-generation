@@ -10,11 +10,10 @@ from keras.layers.core import Dense
 from keras.models import Model
 from keras.callbacks import EarlyStopping
 from headline_generation.model.eval_model import return_xy_subset
-from headline_generation.utils.preprocessing import gen_embedding_weights, \
-        vectorize_texts, format_inputs
+from headline_generation.utils.preprocessing import vectorize_texts, format_inputs
 from headline_generation.utils.data_io import return_data
 from headline_generation.utils.mappings import create_mapping_dicts, \
-        map_idxs_to_str
+        map_idxs_to_str, gen_embedding_weights
 from headline_generation.utils.keras_callbacks import PredictForEpoch
 from headline_generation.model.eval_model import generate_sequence, return_xy_subset
 

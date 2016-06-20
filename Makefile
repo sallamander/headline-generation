@@ -34,8 +34,5 @@ data/word_embeddings/glove.6B.50d.txt:
 bodies.pkl: headline_generation/data_setup/twenty_news_gen.py
 	python headline_generation/data_setup/twenty_news_gen.py	
 
-headlines.pkl: headline_generation/data_setup/twenty_news_gen.py
-	python headline_generation/data_setup/twenty_news_gen.py	
-
 word_embeddings: data/word_embeddings/glove.6B.50d.txt 
-data: bodies.pkl headlines.pkl
+data: bodies.pkl

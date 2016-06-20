@@ -12,6 +12,7 @@ def return_data(data_type, embed_dim=50):
     Args: 
     ----
         data_type: str
+        embed_dim (optional): int
 
     Return: varied
     """

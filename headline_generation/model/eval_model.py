@@ -9,7 +9,6 @@ def generate_sequence(lstm_model, x):
     ----
         lstm_model: keras.model.Model object
         x: 1d np.ndarray
-        length: int
 
     Return:
     ------
@@ -57,15 +56,18 @@ def return_xy_subset(X, y, headlines_arr, nobs=10, train=True):
         y_subset: 2d np.ndarray
         X: 2d np.ndarray
         y: 2d np.ndarray
-        headlines: 1d np.ndarray 
+        hlines_to_predict: 1d np.ndarray 
+        filtered_hlines_arr: 1d np.ndarray
+            Holds the original headlines minus any in the test set if testing. 
     """
     
     X_subset = np.zeros((0, X.shape[1]))
     y_subset = np.zeros((0, y.shape[1]))
-    headlines = headlines_arr[:nobs]
+    filtered_hlines_arr = headlines_arr
+    hlines_to_predict = headlines_arr[:nobs]
 
     row_idx = 0
-    for headline in headlines: 
+    for headline in hlines_to_predict: 
         len_hline = len(headline)
         X_ob, y_ob = X[row_idx:(row_idx + 1)], y[row_idx:(row_idx + 1)]
         X_subset = np.concatenate([X_subset, X_ob])
@@ -75,6 +77,6 @@ def return_xy_subset(X, y, headlines_arr, nobs=10, train=True):
     if not train: 
         X = X[row_idx:]
         y = y[row_idx:]
-        headlines_arr = headlines_arr[nobs:]
+        filtered_hlines_arr = headlines_arr[nobs:]
 
-    return X_subset, y_subset, X, y, headlines, headlines_arr
+    return X_subset, y_subset, X, y, hlines_to_predict, filtered_hlines_arr

@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from gensim.models.word2vec import Word2Vec
 from headline_generation.utils.mappings import create_mapping_dicts, \
-        map_idxs_to_str, map_xy_to_str
+        map_idxs_to_str, map_xy_to_str, gen_embedding_weights
 
 class TestMappings: 
 
@@ -31,6 +31,14 @@ class TestMappings:
         del cls.word_vector_dct
         del cls.bodies
         del cls.headlines
+
+    def test_gen_embedding_weights(self): 
+
+        embedding_weights = gen_embedding_weights(self.word_idx_dct, 
+                                                  self.word_vector_dct)
+
+        assert (len(self.word_idx_dct) == embedding_weights.shape[0])
+        assert (len(self.vocab) == embedding_weights.shape[1] + 1)
 
     def test_create_mapping_dicts(self): 
 

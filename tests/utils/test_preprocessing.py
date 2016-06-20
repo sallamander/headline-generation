@@ -1,8 +1,7 @@
 import pytest 
 import numpy as np
 from gensim.models.word2vec import Word2Vec
-from headline_generation.utils.preprocessing import gen_embedding_weights, \
-        vectorize_texts, format_inputs
+from headline_generation.utils.preprocessing import vectorize_texts, format_inputs
 from headline_generation.utils.mappings import create_mapping_dicts
 
 class TestPreprocessing: 
@@ -36,14 +35,6 @@ class TestPreprocessing:
         del cls.headlines
         del cls.vec_bodies_arr
         del cls.vec_headlines_arr
-
-    def test_gen_embedding_weights(self): 
-
-        embedding_weights = gen_embedding_weights(self.word_idx_dct, 
-                                                  self.word_vector_dct)
-
-        assert (len(self.word_idx_dct) == embedding_weights.shape[0])
-        assert (len(self.vocab) == embedding_weights.shape[1] + 1)
 
     def test_vectorize_texts(self): 
          

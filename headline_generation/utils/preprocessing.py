@@ -7,31 +7,6 @@ embedding to vectorize them.
 import numpy as np
 from headline_generation.utils.mappings import map_idxs_to_str
 
-def gen_embedding_weights(word_idx_dct, word_vector_dct): 
-    """Generate the initial embedding weights.
-
-    Args: 
-    ----
-        word_idx_dct: dict
-        word_vector_dct: dict
-
-    Return: 
-    ------
-        embedding_weights: 2d np.ndarry
-    """
-
-    n_words = len(word_idx_dct)
-    # A little gross, but avoids loading all keys/values into memory. We need 
-    # to access one of the lists and see how many dimensions each embedding has.
-    n_dim = next(len(word_vector_dct[word]) for word in word_vector_dct)
-
-    embedding_weights = np.zeros((n_words, n_dim))
-
-    for wrd, idx in word_idx_dct.items():
-        embedding_weights[idx, :] = word_vector_dct[wrd]
-
-    return embedding_weights
-
 def _vec_txt(words, word_idx_dct): 
     """Translate the inputted words into numbers using the `word_idx_dct`. 
 
@@ -45,7 +20,6 @@ def _vec_txt(words, word_idx_dct):
     Return: 
     ------
         vectorized_words_lst: list of ints
-            Returns `None` if none of the inputted words are in the `word_idx_dct` 
     """
 
     vectorized_words_lst = []
@@ -68,8 +42,8 @@ def vectorize_texts(bodies, headlines, word_idx_dct):
 
     Return: 
     ------
-        vec_bodies_arr: 1d np.ndarray
-        vec_headlines_arr: 1d np.ndarray
+        vec_bodies_arr: 1d np.ndarray of lists 
+        vec_headlines_arr: 1d np.ndarray of lists
     """
 
     vec_bodies = []
@@ -105,8 +79,8 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
     
     Args: 
     ----
-        bodies_arr: 1d np.ndarray of lists 
-        headlines_arr: 1d np.ndarray of lists
+        bodies_arr: 1d np.ndarray of lists ints
+        headlines_arr: 1d np.ndarray of lists ints
         vocab_size: int
         maxlen (optional): int
             How long to make the X sequences used for predicting. 
@@ -135,12 +109,15 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
 
         if len_hline <= max_hline_len: 
             clipped_body = body[:maxlen]
+
             # Append a 0 to the body and headline to indicate an EOF character. 
             clipped_body.append(0)
             hline.append(0)
             len_hline += 1
+
             clipped_body.extend(hline)
             master_arr.append((clipped_body, len_hline))
+
             filtered_bodies.append(body)
             filtered_headlines.append(hline)
 
@@ -157,7 +134,7 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
             X_s = np.concatenate([X_s, X])
             ys = np.concatenate([ys, y])
 
-    # This is much faster than inserting in the above loop.
+    # This is faster than inserting in the above loop.
     y_s = np.zeros((X_s.shape[0], vocab_size)).astype('int32')
     idx = np.arange(X_s.shape[0])
     for idx, y in enumerate(ys):

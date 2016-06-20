@@ -40,8 +40,6 @@ def grab_body_headline(article):
 def clean_raw_txt(body, headline, punct_dct=None, stopwrds_set=None): 
     """Clean the body and headline to remove punctuation, stopwords, etc.
 
-    Clean the text according to the input specifications. 
-
     Args: 
     ----
         body: str
@@ -62,9 +60,10 @@ def clean_raw_txt(body, headline, punct_dct=None, stopwrds_set=None):
     body_wrds = word_tokenize(body)
     headline_wrds = word_tokenize(headline)
 
-    if stopwrds_set: 
-        body_wrds = [wrd.lower() for wrd in body_wrds if wrd.lower() not in stopwrds_set] 
-        headline_wrds = [wrd.lower() for wrd in headline_wrds if wrd.lower() not in stopwrds_set]
+    stopwrds_set = set() if stopwrds_set is None else stopwrds_set
+
+    body_wrds = [wrd.lower() for wrd in body_wrds if wrd.lower() not in stopwrds_set] 
+    headline_wrds = [wrd.lower() for wrd in headline_wrds if wrd.lower() not in stopwrds_set]
 
     return (body_wrds, headline_wrds)
 
