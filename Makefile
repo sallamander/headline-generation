@@ -4,6 +4,7 @@ work/.folder_structure_sentinel:
 
 	mkdir -p work/preds
 	mkdir work/weights
+	mkdir work/losses
 
 	touch work/.folder_structure_sentinel
 

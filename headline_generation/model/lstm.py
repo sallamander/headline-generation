@@ -1,8 +1,10 @@
 """A script for fitting an LSTM to generate headlines for article text."""
 
+import numpy as np
+np.random.seed(427)  # for reproducibility
+
 import sys
 import datetime
-import numpy as np
 from keras.layers import Input
 from keras.layers.embeddings import Embedding
 from keras.layers.recurrent import LSTM
@@ -17,16 +19,12 @@ from headline_generation.utils.mappings import create_mapping_dicts, \
 from headline_generation.utils.keras_callbacks import PredictForEpoch
 from headline_generation.model.eval_model import generate_sequence, return_xy_subset
 
-def make_model(embedding_weights, max_features=300, batch_size=32, input_length=50):
+def make_model(embedding_weights, input_length=50):
     """Build an LSTM based off the input parameters and return it compiled. 
 
     Args: 
     ----
         embedding_weights: 2d np.ndarray
-        max_features (optional): int
-            Holds the max number of features for the embedding layer
-        batch_size (optional): int
-            Holds how many article bodies to feed through at a time
         input_length (optional): int
             Holds how many words each article body will hold
 
@@ -41,20 +39,18 @@ def make_model(embedding_weights, max_features=300, batch_size=32, input_length=
     bodies = Input(shape=(input_length,), dtype='int32') 
     embeddings = Embedding(input_dim=dict_size, output_dim=embedding_dim,
                            weights=[embedding_weights])(bodies)
-    layer = LSTM(512, return_sequences=True)(embeddings)
-    layer = LSTM(512, return_sequences=True)(embeddings)
-    layer = LSTM(512, return_sequences=True)(embeddings)
-    layer = LSTM(512, return_sequences=False)(layer)
+    layer = LSTM(224, return_sequences=True)(embeddings)
+    layer = LSTM(224, return_sequences=False)(layer)
     layer = Dense(dict_size, activation='softmax')(layer)
 
     lstm_model = Model(input=bodies, output=layer)
 
-    lstm_model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
+    lstm_model.compile(loss='categorical_crossentropy', optimizer='adagrad')
 
     return lstm_model
 
-def fit_model(lstm_model, X_fit, y_fit, X_train, y_train, X_test, y_test, 
-              nb_epoch=10, early_stopping_tol=0, validation_split=0.0, 
+def fit_model(lstm_model, X_fit, y_fit, X_train, y_train, X_test, y_test,
+              batch_size=32, nb_epoch=10, early_stopping_tol=0, validation_split=0.0, 
               save_filepath=None, on_epoch_end=False, idx_word_dct=None): 
     """Fit the inputted LSTM model according to the inputted specifications. 
 
@@ -73,6 +69,7 @@ def fit_model(lstm_model, X_fit, y_fit, X_train, y_train, X_test, y_test,
         y_train: 2d np.ndarray
         X_test: 2d np.ndarray
         y_test: 2d np.ndarray
+        batch_size (optional): int
         nb_epoch (optional): int 
         early_stopping_tol (optional): int 
             Holds the `patience` to pass into a keras.callbacks.EarlyStopping object
@@ -100,7 +97,8 @@ def fit_model(lstm_model, X_fit, y_fit, X_train, y_train, X_test, y_test,
         callbacks.append(predict_per_epoch)
     
     lstm_model.fit(X, y, nb_epoch=nb_epoch, callbacks=callbacks,
-                   validation_split=validation_split)
+                   validation_split=validation_split, batch_size=batch_size,   
+                   shuffle=False)
 
     return lstm_model
 
@@ -147,6 +145,26 @@ def predict_w_model(lstm_model, X, y, headlines, idx_word_dct, save_filepath=Non
 
             row_idx += 1
 
+def save_model_losses(lstm_model, save_filepath): 
+    """Save model losses to the inputted filepath
+
+    Args: 
+    ----
+        lstm_model: fitted keras.model.Model object
+        save_filepath: str
+
+    """
+
+    history = lstm_model.history
+    train_losses = history.history['loss']
+    test_losses = history.history['val_loss']
+
+    train_fp = '{}_train.txt'.format(save_filepath)
+    test_fp = '{}_test.txt'.format(save_filepath)
+
+    np.savetxt(train_fp, train_losses)
+    np.savetxt(test_fp, test_losses)
+
 if __name__ == '__main__': 
     try: 
         embed_dim = sys.argv[1]
@@ -173,19 +191,21 @@ if __name__ == '__main__':
 
     X_test, y_test, X, y, test_hlines, filtered_headlines = return_xy_subset(X, y,
                                                                 filtered_headlines, 
-                                                                nobs=10, train=False)
+                                                                nobs=20, train=False)
     X_train, y_train, X, y, train_hlines, filtered_headlines = return_xy_subset(X, y,
                                                                   filtered_headlines, 
-                                                                  nobs=10, train=True)
+                                                                  nobs=20, train=True)
     maxlen += 1 # Account for newline characters added in. 
-    dt = datetime.datetime.now().strftime('%Y_%m_%d_%H_%M')
-    preds_filepath = 'work/preds/{}'.format(dt)
+    preds_filepath = 'work/preds/glove_{}'.format(embed_dim)
 
-    lstm_model = make_model(embedding_weights, input_length=maxlen, batch_size=256)
+    lstm_model = make_model(embedding_weights, input_length=maxlen)
     lstm_model = fit_model(lstm_model, X, y, X_train, train_hlines, X_test,
-                           test_hlines, nb_epoch=35, early_stopping_tol=5, 
-                           save_filepath=preds_filepath, on_epoch_end=True, 
-                           idx_word_dct=idx_word_dct, validation_split=0.20)
+                           test_hlines, batch_size=32, nb_epoch=100,
+                           early_stopping_tol=3, save_filepath=preds_filepath, 
+                           on_epoch_end=True, idx_word_dct=idx_word_dct,
+                           validation_split=0.10)
     
     weights_fname = 'work/weights/glove_{}.h5'.format(embed_dim)
     lstm_model.save_weights(weights_fname, overwrite=True)
+    losses_fp = 'work/losses/glove_{}'.format(embed_dim)
+    save_model_losses(lstm_model, losses_fp)
