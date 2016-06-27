@@ -1,13 +1,14 @@
 """A script for fitting an LSTM to generate headlines for article text."""
 
 import numpy as np
-np.random.seed(427)  # for reproducibility
+np.random.seed(427)  # For reproducibility
 
 import sys
+sys.setrecursionlimit(10000) # To avoid dropout errors
 import datetime
 from keras.layers import Input
 from keras.layers.embeddings import Embedding
-from keras.layers.recurrent import LSTM
+from keras.layers.recurrent import GRU
 from keras.layers.core import Dense
 from keras.models import Model
 from keras.callbacks import EarlyStopping
@@ -38,9 +39,9 @@ def make_model(embedding_weights, input_length=50):
 
     bodies = Input(shape=(input_length,), dtype='int32') 
     embeddings = Embedding(input_dim=dict_size, output_dim=embedding_dim,
-                           weights=[embedding_weights])(bodies)
-    layer = LSTM(224, return_sequences=True)(embeddings)
-    layer = LSTM(224, return_sequences=False)(layer)
+                           weights=[embedding_weights], dropout=0.5)(bodies)
+    layer = GRU(1024, return_sequences=True, dropout_W=0.5, dropout_U=0.5)(embeddings)
+    layer = GRU(1024, return_sequences=False, dropout_W=0.5, dropout_U=0.5)(layer)
     layer = Dense(dict_size, activation='softmax')(layer)
 
     lstm_model = Model(input=bodies, output=layer)
@@ -191,17 +192,17 @@ if __name__ == '__main__':
 
     X_test, y_test, X, y, test_hlines, filtered_headlines = return_xy_subset(X, y,
                                                                 filtered_headlines, 
-                                                                nobs=20, train=False)
+                                                                nobs=50, train=False)
     X_train, y_train, X, y, train_hlines, filtered_headlines = return_xy_subset(X, y,
                                                                   filtered_headlines, 
-                                                                  nobs=20, train=True)
+                                                                  nobs=50, train=True)
     maxlen += 1 # Account for newline characters added in. 
     preds_filepath = 'work/preds/glove_{}'.format(embed_dim)
 
     lstm_model = make_model(embedding_weights, input_length=maxlen)
     lstm_model = fit_model(lstm_model, X, y, X_train, train_hlines, X_test,
-                           test_hlines, batch_size=32, nb_epoch=100,
-                           early_stopping_tol=3, save_filepath=preds_filepath, 
+                           test_hlines, batch_size=32, nb_epoch=300,
+                           early_stopping_tol=5, save_filepath=preds_filepath, 
                            on_epoch_end=True, idx_word_dct=idx_word_dct,
                            validation_split=0.10)
     
