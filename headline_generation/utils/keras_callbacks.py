@@ -13,7 +13,7 @@ class PredictForEpoch(Callback):
         y_train: 2d np.ndarray
         X_test: 2d np.ndarray
         y_test: 2d np.ndarray
-        idx_word_dct: dct
+        idx_word_dct: dict
         save_filepath: str
     """
 

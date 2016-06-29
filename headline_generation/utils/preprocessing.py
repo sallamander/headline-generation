@@ -5,6 +5,7 @@ embedding to vectorize them.
 """
 
 import numpy as np
+from keras.utils.np_utils import to_categorical 
 from headline_generation.utils.mappings import map_idxs_to_str
 
 def _vec_txt(words, word_idx_dct): 
@@ -38,12 +39,12 @@ def vectorize_texts(bodies, headlines, word_idx_dct):
     ----
         bodies: list of lists of strings
         headlines: list of lists of strings
-        word_idx_dct: dct
+        word_idx_dct: dict
 
     Return: 
     ------
-        vec_bodies_arr: 1d np.ndarray of lists 
-        vec_headlines_arr: 1d np.ndarray of lists
+        vec_bodies: 1d np.ndarray of lists 
+        vec_headlines: 1d np.ndarray of lists
     """
 
     vec_bodies = []
@@ -55,18 +56,14 @@ def vectorize_texts(bodies, headlines, word_idx_dct):
             vec_bodies.append(vec_body)
             vec_headlines.append(vec_headline)
     
-    vec_bodies_arr = np.array(vec_bodies)
-    vec_headlines_arr = np.array(vec_headlines)
+    return vec_bodies, vec_headlines 
 
-    return vec_bodies_arr, vec_headlines_arr 
-
-def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1): 
-    """Format the body and headline arrays into the X,y matrices fed into the LSTM.
+def format_inputs(vec_bodies, vec_headlines, vocab_size, maxlen=50, step=1): 
+    """Format the body and headline arrays into the X,y matrices fed into the model.
 
     Take the article bodies and headlines concatenated (e.g. a continuous array
     of words starting with the first word in the body and ending with the last
     word in the headline), and create (X, y) pairs to build up X and y matrices
-    to feed into the LSTM. 
     
     Building these (X, y) pairs includes: 
         - Dropping any body/article pairs where the body is less than the `maxlen` 
@@ -79,66 +76,47 @@ def format_inputs(bodies_arr, headlines_arr, vocab_size, maxlen=50, step=1):
     
     Args: 
     ----
-        bodies_arr: 1d np.ndarray of lists ints
-        headlines_arr: 1d np.ndarray of lists ints
+        vec_bodies: list of lists ints
+        vec_headlines: list of lists ints
         vocab_size: int
         maxlen (optional): int
             How long to make the X sequences used for predicting. 
         step (optional): int
-            How many words to skip over when passing through the concatenated
+            How many words to step by when passing through the concatenated
             article + body and generating (X,y) pairs 
 
     Return: 
     ------
-        X_s: 2d np.ndarray
-        y_s: 2d np.ndarray
+        Xs: 2d np.ndarray
+        ys: 2d np.ndarray
         filtered_bodies: list 
         filtered_headlines: list
     """
 
-    X_s = np.zeros((0, maxlen + 1)).astype('int32')
-    ys = np.zeros((0, 1)).astype('int32')
+    Xs, ys = [], []
 
-    master_arr = []
     filtered_bodies = []
     filtered_headlines = []
-    for body, hline in zip(bodies_arr, headlines_arr): 
+    for body, hline in zip(vec_bodies, vec_headlines): 
         
         len_body, len_hline = len(body), len(hline)
         max_hline_len = (len_body - maxlen) // step
+        hline.append(0) # Append the newline character. 
 
         if len_hline <= max_hline_len: 
-            clipped_body = body[:maxlen]
+            for idx, word in enumerate(hline): 
+                X = body[idx:maxlen] + [0] + hline[:idx]
+                y = hline[idx]
 
-            # Append a 0 to the body and headline to indicate an EOF character. 
-            clipped_body.append(0)
-            hline.append(0)
-            len_hline += 1
-
-            clipped_body.extend(hline)
-            master_arr.append((clipped_body, len_hline))
+                Xs.append(X)
+                ys.append(y)
 
             filtered_bodies.append(body)
             filtered_headlines.append(hline)
+    
+    # One-hot encode y.
+    ys = to_categorical(ys, nb_classes=vocab_size)
+    Xs = np.array(Xs, dtype='int32')
 
-    for body_n_hline, len_hline in master_arr:
-        for idx in range(0, len_hline, step): 
-            X_start = idx
-            X_end = X_start + maxlen + 1
-            X = np.array(body_n_hline[X_start:X_end])[np.newaxis]
-
-            y_start = idx + maxlen + 1
-            y_end = y_start + 1
-            y = np.array(body_n_hline[y_start:y_end])[np.newaxis]
-
-            X_s = np.concatenate([X_s, X])
-            ys = np.concatenate([ys, y])
-
-    # This is faster than inserting in the above loop.
-    y_s = np.zeros((X_s.shape[0], vocab_size)).astype('int32')
-    idx = np.arange(X_s.shape[0])
-    for idx, y in enumerate(ys):
-        y_s[idx, y] = 1
-
-    return X_s, y_s, filtered_bodies, filtered_headlines
+    return Xs, ys, filtered_bodies, filtered_headlines
 

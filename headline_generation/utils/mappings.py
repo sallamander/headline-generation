@@ -40,7 +40,6 @@ def create_mapping_dicts(wrd_embedding, filter_corpus=False, bodies=None,
     word_idx_dct['\n'] = 0
     idx_word_dct[0] = '\n'
 
-    
     word_vector_dct = {wrd: wrd_embedding[wrd] for idx, wrd in gensim_dct.items()}
     vec_dim = next(len(value) for value in word_vector_dct.values())
     word_vector_dct['\n'] = np.zeros((vec_dim))
@@ -132,8 +131,7 @@ def gen_embedding_weights(word_idx_dct, word_vector_dct):
     """
 
     n_words = len(word_idx_dct)
-    # A little gross, but avoids loading all keys/values into memory. We need 
-    # to access one of the lists and see how many dimensions each embedding has.
+    # Access one of the lists and see how many dimensions each embedding has. 
     n_dim = next(len(word_vector_dct[word]) for word in word_vector_dct)
 
     embedding_weights = np.zeros((n_words, n_dim))

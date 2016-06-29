@@ -23,8 +23,8 @@ class TestPreprocessing:
                 create_mapping_dicts(word2vec_model)
         cls.vocab.add('\n')
     
-        cls.vec_bodies_arr, cls.vec_headlines_arr = \
-                vectorize_texts(cls.bodies, cls.headlines, cls.word_idx_dct)
+        cls.vec_bodies, cls.vec_headlines = vectorize_texts(cls.bodies, cls.headlines, 
+                                                            cls.word_idx_dct)
 
     def teardown_class(cls): 
         del cls.vocab
@@ -33,24 +33,24 @@ class TestPreprocessing:
         del cls.word_vector_dct
         del cls.bodies
         del cls.headlines
-        del cls.vec_bodies_arr
-        del cls.vec_headlines_arr
+        del cls.vec_bodies
+        del cls.vec_headlines
 
     def test_vectorize_texts(self): 
          
-        assert (type(self.vec_bodies_arr) == np.ndarray)
-        assert (type(self.vec_headlines_arr) == np.ndarray)
-        assert (self.vec_bodies_arr.shape[0] <= len(self.bodies))
-        assert (self.vec_headlines_arr.shape[0] <= len(self.headlines))
+        assert (type(self.vec_bodies) == list)
+        assert (type(self.vec_headlines) == list)
+        assert (len(self.vec_bodies) <= len(self.bodies))
+        assert (len(self.vec_headlines) <= len(self.headlines))
 
     def test_format_inputs(self): 
 
         X, y, filtered_bodies, filtered_headlines = \
-                format_inputs(self.vec_bodies_arr, self.vec_headlines_arr, 
+                format_inputs(self.vec_bodies, self.vec_headlines, 
                               len(self.vocab), maxlen=2, step=1)
 
-        assert (len(filtered_bodies) <= self.vec_bodies_arr.shape[0])
-        assert (len(filtered_headlines) <= self.vec_headlines_arr.shape[0])
+        assert (len(filtered_bodies) <= len(self.vec_bodies))
+        assert (len(filtered_headlines) <= len(self.vec_headlines))
 
         assert (X.shape[0] == 5)
         assert (X.shape[1] == 3)
