@@ -131,7 +131,6 @@ if __name__ == '__main__':
     # loading and pre-processing ahead of time, which is why it's done here. 
     wrd_embedding = return_data("word_embedding", embed_dim=embed_dim)
     bodies, headlines = return_data("articles")
-    bodies, headlines = bodies[:200], headlines[:200]
 
     word_idx_dct, idx_word_dct, word_vector_dct = \
             create_mapping_dicts(wrd_embedding, filter_corpus=True, bodies=bodies, 
@@ -157,7 +156,7 @@ if __name__ == '__main__':
 
     model = make_model(embedding_weights, input_length=maxlen)
     model = fit_model(model, X, y, X_train, train_hlines, X_test,
-                           test_hlines, batch_size=32, nb_epoch=1,
+                           test_hlines, batch_size=32, nb_epoch=300, 
                            early_stopping_tol=5, save_filepath=preds_filepath, 
                            on_epoch_end=True, idx_word_dct=idx_word_dct,
                            validation_split=0.10)
